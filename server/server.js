@@ -23,6 +23,18 @@ app.post('/todos', (req, res) => {
     });
 });
 
+app.get('/todos', (req, res) => {
+    Todo.find().then((todos) => {
+        console.log('Fetching todos');
+        res.send({
+            todos
+        })
+    }, (err) => {
+        console.log('Unable to fetch todos', err);
+        res.status(400).send(err);
+    });
+});
+
 app.listen(3000, () => {
     console.log('App is listening!');
 });

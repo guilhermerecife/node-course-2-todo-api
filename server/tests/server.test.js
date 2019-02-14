@@ -4,8 +4,28 @@ const request = require('supertest');
 const { app } = require('./../server');
 const { Todo } = require('./../models/todo');
 
+const todos = [{
+    text: "Test todo 1"
+}, {
+    text: "Test todo 2"
+}];
+
 beforeEach((done) => {//before each test case
-    Todo.remove({}).then(() => done());//clear todo collection
+    Todo.remove({}).then(() => {//clear todo collection
+        return Todo.insertMany(todos);//insert defaults todos
+    }).then(() => done());
+});
+
+describe('GET /todos', () => {
+    it('Should get all todos', (done) => {
+        request(app)//Make a get request on app
+            .get('/todos')//in that url
+            .expect(200)//expect response status code to be 200
+            .expect((res) => {
+                expect(res.body.todos.length).toBe(2);//expect two todos in todos array
+            })
+            .end(done);
+    });
 });
 
 describe('POST /todos', () => {
@@ -23,7 +43,7 @@ describe('POST /todos', () => {
                 if(err) {//if some errors ocurrs in previous expext, call done as wrong test
                     return done(err);
                 }
-                Todo.find().then((todos) => {
+                Todo.find({ text }).then((todos) => {
                     expect(todos.length).toBe(1);//expect it saved the todo in the database
                     expect(todos[0].text).toBe(text);//and the one saved has text attr equals text
                     done();
@@ -41,7 +61,7 @@ describe('POST /todos', () => {
                     return done(err);
                 }
                 Todo.find().then((todos) => {
-                    expect(todos.length).toBe(0);//expect it didnt save the todo in the database
+                    expect(todos.length).toBe(2);//expect it didnt save the todo in the database
                     done();
                 }, (err) => done(err));
             });
