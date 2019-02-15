@@ -19,6 +19,41 @@ beforeEach((done) => {//before each test case
     }).then(() => done());
 });
 
+describe('DELETE /todos/:id', () => {
+    it('Should remove a todo', (done) => {
+        var hexId = todos[0]._id.toHexString();
+
+        request(app)//Make a get request on app
+            .delete(`/todos/${hexId}`)//in that url with _id for the first todo
+            .expect(200)//expect response status code to be 200
+            .expect((res) => {//and text from response to be equals of the first todo
+                expect(res.body.todo._id).toBe(hexId);
+            }).end((err, res) => {
+                if(err) {//if some errors ocurrs in previous expext, call done as wrong test
+                    return done(err);
+                }
+                Todo.findById(hexId).then((todo) => {
+                    expect(todo).toNotExist();
+                    done();
+                }).catch(e => done(e));
+            });
+    });
+
+    it('Should return 404 if todo not found', (done) => {
+        request(app)//Make a get request on app
+            .get(`/todos/${new ObjectID().toHexString()}`)//in that url with random _id
+            .expect(404)//expect response status code to be 404
+            .end(done);
+    });
+
+    it('Should return 404 if object id is invalid', (done) => {
+        request(app)//Make a get request on app
+            .get(`/todos/1234`)//in that url with random _id
+            .expect(404)//expect response status code to be 404
+            .end(done); 
+    });
+});
+
 describe('GET /todos/:id', () => {
     it('Should get todo doc', (done) => {
         request(app)//Make a get request on app
