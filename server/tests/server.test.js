@@ -10,7 +10,9 @@ const todos = [{
     text: "Test todo 1"
 }, {
     _id: new ObjectID(),
-    text: "Test todo 2"
+    text: "Test todo 2",
+    completed: true,
+    completedAt: 333
 }];
 
 beforeEach((done) => {//before each test case
@@ -19,11 +21,49 @@ beforeEach((done) => {//before each test case
     }).then(() => done());
 });
 
+describe('PATCH /todos/:id', () => {
+    it('Should update the todo', (done) => {
+        var hexId = todos[0]._id.toHexString();
+        var updated = {
+            text: "Updated",
+            completed: true
+        };
+
+        request(app)//Make a patch request on app
+            .patch(`/todos/${hexId}`)//in that url with _id for the first todo
+            .send(updated)//sending it as parameter
+            .expect(200)//expect response status code to be 200
+            .expect((res) => {//and text from response to be equals of the first todo
+                expect(res.body.todo.text).toBe(updated.text);
+                expect(res.body.todo.completed).toBe(true);
+                expect(res.body.todo.completedAt).toBeA('number');
+            }).end(done);
+    });
+
+    it('Should clear completedAt when todo is not completed', (done) => {
+        var hexId = todos[1]._id.toHexString();
+        var updated = {
+            text: "Updated",
+            completed: false
+        };
+
+        request(app)//Make a patch request on app
+            .patch(`/todos/${hexId}`)//in that url with _id for the first todo
+            .send(updated)//sending it as parameter
+            .expect(200)//expect response status code to be 200
+            .expect((res) => {//and text from response to be equals of the first todo
+                expect(res.body.todo.text).toBe(updated.text);
+                expect(res.body.todo.completed).toBe(false);
+                expect(res.body.todo.completedAt).toNotExist();
+            }).end(done);
+    });
+});
+
 describe('DELETE /todos/:id', () => {
     it('Should remove a todo', (done) => {
         var hexId = todos[0]._id.toHexString();
 
-        request(app)//Make a get request on app
+        request(app)//Make a delete request on app
             .delete(`/todos/${hexId}`)//in that url with _id for the first todo
             .expect(200)//expect response status code to be 200
             .expect((res) => {//and text from response to be equals of the first todo
@@ -40,14 +80,14 @@ describe('DELETE /todos/:id', () => {
     });
 
     it('Should return 404 if todo not found', (done) => {
-        request(app)//Make a get request on app
+        request(app)//Make a delete request on app
             .get(`/todos/${new ObjectID().toHexString()}`)//in that url with random _id
             .expect(404)//expect response status code to be 404
             .end(done);
     });
 
     it('Should return 404 if object id is invalid', (done) => {
-        request(app)//Make a get request on app
+        request(app)//Make a delete request on app
             .get(`/todos/1234`)//in that url with random _id
             .expect(404)//expect response status code to be 404
             .end(done); 
